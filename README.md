@@ -1,2 +1,4 @@
 # LearnPaython_Class
-how to write Python Program
+how to write Python Programs
+
+just for testing and learning 
