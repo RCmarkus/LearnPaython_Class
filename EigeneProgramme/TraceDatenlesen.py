@@ -28,21 +28,21 @@ def DateiBereinigen(Dateiname, ListName, SplitChar=None, oldChar_1=None,
                 text = text.replace(oldChar_3, replaceByChar_1)
         ListName[n] = text
 
-    """ # Liste nocheinmal bereinigen
+    # Liste nocheinmal bereinigen
     if not replaceByChar_2 == None:
         for n2 in range(len(ListName)):
-            text_2 = str(ListName[n2])
-            for char in text_2:
-                text_2 = text.replace(oldChar_4, replaceByChar_2)
+            for n3 in (ListName):
+                text_2 = str(ListName[n3])
+                for char in text_2:
+                    text_2 = text.replace(oldChar_4, replaceByChar_2)
         ListName = text_2
- """
 
 
 def csvDateierstellen():
     pass
 
 
-""" 
+"""
 def TraceDaten(DateinameTrace):
     with open(DateinameTrace, 'r') as f_kurvenDaten:
 
