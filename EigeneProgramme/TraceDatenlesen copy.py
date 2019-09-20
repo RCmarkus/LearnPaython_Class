@@ -11,25 +11,35 @@ kurvenDaten = defaultdict(list)
 
 def DateiBereinigen(Dateiname, ListName, SplitChar=None, oldChar_1=None,
                     oldChar_2=None, oldChar_3=None, oldChar_4=None, replaceByChar_1=None, replaceByChar_2=None):
-    ListName = []
+    #Name = []
     row = 0
     Spalte_main = []
 
     AnzahlSpalten = 0
     # Datei mit Spaltenangebe öffnen und in eine Liste eintragen
     with open(Dateiname, 'r') as f:
-        File = f.read()
-        text = File.rsplit('\n')
+        File = f.read
         # alle nicht benötigten Zeichen entfernen
-        for n in text:
-            textStr = n.replace(oldChar_1, replaceByChar_1)
-            if not oldChar_2 == None:
-                textStr = n.replace(oldChar_2, replaceByChar_1)
-            if not oldChar_3 == None:
-                textStr = n.replace(oldChar_3, replaceByChar_1)
-        ListName = textStr
+        for n in range(len(ListName)):
+            text = str(ListName[n])
+            for char in text:
+                text = text.replace(oldChar_1, replaceByChar_1)
+                if not oldChar_2 == None:
+                    text = text.replace(oldChar_2, replaceByChar_1)
+                if not oldChar_3 == None:
+                    text = text.replace(oldChar_3, replaceByChar_1)
+            ListName[n] = text
 
-        for zeile in ListName:
+        # Liste nocheinmal bereinigen
+        if not replaceByChar_2 == None:
+            for n2 in range(len(ListName)):
+                for n3 in (ListName):
+                    text_2 = str(ListName[n3])
+                    for char in text_2:
+                        text_2 = text.replace(oldChar_4, replaceByChar_2)
+            ListName = text_2
+
+        for zeile in f:
             if row == 0:
                 Name = f.readline(0)
                 for Spalte in zeile:
@@ -39,18 +49,6 @@ def DateiBereinigen(Dateiname, ListName, SplitChar=None, oldChar_1=None,
                     Value = item_2.rsplit('\;')
                     ListName[Spalte_main].append(Value)
             row += 1
-
-
-"""
-        # Liste nocheinmal bereinigen
-        if not replaceByChar_2 == None:
-            for n2 in range(len(ListName)):
-                for n3 in (ListName):
-                    text_2 = str(ListName[n3])
-                    for char in text_2:
-                        text_2 = text.replace(oldChar_4, replaceByChar_2)
-            ListName = text_2
-"""
 
 
 def csvDateierstellen():
@@ -81,7 +79,7 @@ DateiBereinigen('EigeneProgramme\TraceDaten\spalten.txt', SpaltenNamen,
 """
 # jetzt die eigenliche TraceDatei bereinigen
 DateiBereinigen('EigeneProgramme\TraceDaten\WaageA_TestProd.txt', kurvenDaten,
-                SplitChar='\;', oldChar_1='\x00 ',  # oldChar_2='\x00', oldChar_3='\\n',
+                SplitChar='\;', oldChar_1=' ', oldChar_2='\\x00', oldChar_3='\\n',
                 replaceByChar_1='')
 
 """
