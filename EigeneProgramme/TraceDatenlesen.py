@@ -1,77 +1,129 @@
-import matplotlib.pyplot as plt
+"""
+Version: V1.0
+    Programm um TraceDaten von der SIEMENS SIWAREX FTA auszuwerten
+    als erstes wird eine .txt eingelesen
+
+20.09.2019
+copyright Markus Rychlik ©2019
+"""
+
+from matplotlib import pyplot as plt
+import pandas as pd
 import datetime as dt
 from collections import defaultdict
 import csv
+import numpy as np
+
 
 kurvenDaten = defaultdict(list)
-#SpaltenNamen = defaultdict(list)
-
-""" Datei einlesen und bereinigen"""
 
 
-def DateiBereinigen(Dateiname, ListName, SplitChar=None, oldChar_1=None,
-                    oldChar_2=None, oldChar_3=None, oldChar_4=None, replaceByChar_1=None, replaceByChar_2=None):
+# --------------Datei einlesen und bereinigen--------------
+
+
+def DateiBereinigen(Dateiname, Dict_Name, removeChar=None, replaceByChar=None, removeEmptyLine=None):
+    """
+    Mit dieser Function wird die Datei eingelesen und bestimmte 
+    Zeichen entfernt.\n
+    'Dateiname' = die Datei die geöffnet werden soll\n
+    'Dict_Name' = Dictionary hier werden die bereinigeten Daten geschrieben\n
+    'removeChat' = 1.Zeichen das entfernt werden sollen\n
+    'replaceByChar' = mit diesem Zeichen soll das zu entferne Zeichen ersetzt werden\n
+    'removeEmptyLine' = wie sind leere Zeilen gekenntzeichnet\n
+    """
     ListName = []
-    row = 0
     Spalte_main = []
 
-    AnzahlSpalten = 0
-    # Datei mit Spaltenangebe öffnen und in eine Liste eintragen
-    with open(Dateiname, 'r') as f:
-        File = f.read()
-        text = File.rsplit('\n')
-        # alle nicht benötigten Zeichen entfernen
-        for n in text:
-            textStr = n.replace(oldChar_1, replaceByChar_1)
-            if not oldChar_2 == None:
-                textStr = n.replace(oldChar_2, replaceByChar_1)
-            if not oldChar_3 == None:
-                textStr = n.replace(oldChar_3, replaceByChar_1)
-        ListName = textStr
+    # Datei öffnen und alle nicht benötigten Zeichen entfernen
+    with open(Dateiname, 'r') as txt_File:
+        for n in txt_File:
+            # alle nicht benötigten Zeichen entfernen
+            textStr = n.replace(removeChar, replaceByChar)
+            ListName.append(textStr)
 
-        for zeile in ListName:
-            if row == 0:
-                Name = f.readline(0)
-                for Spalte in zeile:
-                    Spalte_main = Spalte.rsplit('\;')
-            if row >= 1:
-                for item_2 in zeile:
-                    Value = item_2.rsplit('\;')
-                    ListName[Spalte_main].append(Value)
-            row += 1
+    # aus einer Liste ein dictionary schreiben
+    row = 0
+    for zeile in ListName:
+        test = zeile
+        zeile = ListName[row].split('\;')
 
+        # in der ersten Zeile sind die Spaltennamen
+        if row == 0:
+            Spalte_main = test.split(';')
 
-"""
-        # Liste nocheinmal bereinigen
-        if not replaceByChar_2 == None:
-            for n2 in range(len(ListName)):
-                for n3 in (ListName):
-                    text_2 = str(ListName[n3])
-                    for char in text_2:
-                        text_2 = text.replace(oldChar_4, replaceByChar_2)
-            ListName = text_2
-"""
+        # alle nicht benötigen Zeilen entfernen und Werte ins dictionary eintragen
+        if row >= 1 and not test == removeEmptyLine:
+            Value = test.split(';')
+            y = 0
+            for x in Value:
+                Dict_Name[Spalte_main[y]].append(x)
+                y += 1
+        row += 1
 
 
 def csvDateierstellen():
     pass
 
 
-"""
-def TraceDaten(DateinameTrace):
-    with open(DateinameTrace, 'r') as f_kurvenDaten:
+def ZeitstempelAuslesen(Dict_Name, KeyString, timeList):
+    '''
+    Zeiststempel auslesen\n
+    'Dict_Name' = Dictionary aus dem gelesen werden soll\n
+    'KeyString' = um den Zeitstempel im Dictionary zu finden\n
+    'timeList' = das Ergebnis in eine Liste eintragen\n
+    '''
+    DictStringValues = []
+    DictStringValues.append(Dict_Name[KeyString])
+    ValueString = DictStringValues[0]
+    for n in ValueString:
+        datumStr = n
+        if datumStr == '':
+            break
+        timeStp = (dt.datetime.strptime(
+            datumStr, '%d.%m.%y %H:%M:%S %f %a')).time()
+        # print(timeStp)
+        timeStp = str(timeStp)
+        Liste = timeStp.split('.')
+        try:
+            microsek = Liste[1]
+            millisek = int(microsek)//1000
+            millisek = str(millisek)
+            timeList.append(Liste[0] + '.' + millisek)
+        except:  # Sonderfall bei 0000 Microsekunden
+            timeList.append(Liste[0] + '.000')
 
-        for zeile in (3, f_kurvenDaten):
-            datumStr = zeile.split('\ ;')
-            ZeitStempel = (dt.datetime.strptime(
-                datumStr, '%d.%m.%Y %H:%M:%S:%MS')).timestamp()
 
+def werteAuslesen(Dict_Name, KeyString, ValueList, isSignalStatus=('No', 'Yes')):
+    '''
+    Werte Auslesen\n
 
-            for n in range(1, 74):
-                value = []
-                value[n] = n.split('\;')
-            kurvenDaten[ZeitStempel].append(value)
-"""
+    'Dict_Name' = Dictionary aus dem gelesen werden soll\n
+    'KeyString' = um den Zeitstempel im Dictionary zu finden\n
+    'ValueList' = das Ergebnis in eine Liste eintragen\n
+    'isSignalStatus' = No/Yes\n
+            No = Werte werden als float-Werte zurückgegeben\n
+            Yes = Werte sind binär und werden entsprechend skaliert '0'=0 und '1'=25\n
+    '''
+    DictStringValues = []
+    DictStringValues.append(Dict_Name[KeyString])
+    ValueString = DictStringValues[0]
+    if isSignalStatus == 'No':
+        for n in ValueString:
+            ValueStr = n
+            if ValueStr == '':
+                break
+            ValueStr = float(ValueStr)
+            ValueList.append(ValueStr)
+    if isSignalStatus == 'Yes':
+        for n in ValueString:
+            ValueStr = n
+            if ValueStr == '':
+                break
+            if ValueStr == '1':
+                ValueList.append(25)
+            else:
+                ValueList.append(0)
+
 
 """
 # als erstes die Datei mit den Spaltennamen bereinigen
@@ -80,49 +132,104 @@ DateiBereinigen('EigeneProgramme\TraceDaten\spalten.txt', SpaltenNamen,
 
 """
 # jetzt die eigenliche TraceDatei bereinigen
-DateiBereinigen('EigeneProgramme\TraceDaten\WaageA_TestProd.txt', kurvenDaten,
-                SplitChar='\;', oldChar_1='\x00 ',  # oldChar_2='\x00', oldChar_3='\\n',
-                replaceByChar_1='')
+DateiBereinigen('LearnPaython_Class\EigeneProgramme\TraceDaten\WaageA_nonSlip_03.txt', kurvenDaten,
+                removeChar='\x00', replaceByChar='', removeEmptyLine='\n')
 
-"""
+Zeitstempel = []
+Nettogewicht = []
+Grobabschaltpunkt = []
+Entleersignal = []
+gefilterter_Digitwert = []
+ungefilterterADC_Wert = []
+Grobsignal = []
+Feinsignal = []
+WartenAufStillstand = []
 
-# TraceDaten('EigeneProgramme\TraceDaten\WaageA_TestProd.txt')
-with open('EigeneProgramme\TraceDaten\spalten.txt', 'r') as File:
-    Inhalt = File.read()
+ZeitstempelAuslesen(kurvenDaten, 'Zeitstempel', Zeitstempel)
 
-"""
-print(kurvenDaten)
-print(len(kurvenDaten))
+werteAuslesen(kurvenDaten, 'Nettoprozessgewicht',
+              Nettogewicht, isSignalStatus='No')
 
-"""
-print(SpaltenNamen)
-print(len(SpaltenNamen))
-print(Inhalt)
+werteAuslesen(kurvenDaten, 'Grobabschaltpunkt',
+              Grobabschaltpunkt, isSignalStatus='No')
 
-csv.register_dialect('myDialect',
-                     delimiter=',',
-                     quoting=csv.QUOTE_NONE,
-                     skipinitialspace=True)
+werteAuslesen(kurvenDaten, 'gefilterter Digitwert',
+              gefilterter_Digitwert, isSignalStatus='No')
 
-NamenZusatz_1 = '_Test_01'
+werteAuslesen(kurvenDaten, 'ungefilterter ADC Wert',
+              ungefilterterADC_Wert, isSignalStatus='No')
 
-with open('EigeneProgramme\TraceDaten\TraceDaten' + NamenZusatz_1 + '.csv', 'w') as f1:
-    writer_1 = csv.writer(f1)  # , dialect='myDialect')
-    writer_1.writerow(SpaltenNamen)
-"""
+werteAuslesen(kurvenDaten, 'Entleersignal',
+              Entleersignal, isSignalStatus='Yes')
 
-NamenZusatz_2 = '_Test_02'
+werteAuslesen(kurvenDaten, 'Grobsignal',
+              Grobsignal, isSignalStatus='Yes')
 
-with open('EigeneProgramme\TraceDaten\TraceDaten' + NamenZusatz_2 + '.csv', 'w') as f2:
-    writer_2 = csv.writer(f2)  # , dialect='myDialect')
-    for lineWrite in range(len(kurvenDaten)):
-        writer_2.writerow(kurvenDaten[lineWrite])
+werteAuslesen(kurvenDaten, 'Feinsignal',
+              Feinsignal, isSignalStatus='Yes')
 
-"""
-print(SpaltenNamen)
-print(len(SpaltenNamen))
+werteAuslesen(kurvenDaten, 'Warten auf Stillstand',
+              WartenAufStillstand, isSignalStatus='Yes')
 
 
-print(kurvenDaten)
-print(len(kurvenDaten))
-"""
+maxLengthTimeStp = len(Zeitstempel)
+timeLine = []
+timeTick = 0
+for n in range(maxLengthTimeStp):
+    timeLine.append(timeTick)
+    timeTick += 10
+
+sampel_time = pd.DataFrame(Zeitstempel)
+sampel_time
+#lastTimeTick = int(timeLine)
+
+fig, ax1 = plt.subplots()
+ax2 = ax1.twiny()
+ax3 = ax1.twiny()
+ax4 = ax1.twiny()
+ax5 = ax1.twiny()
+ax6 = ax1.twiny()
+
+ax1.plot(timeLine, Nettogewicht,
+         lw=0.5, label='Nettogewicht', color='red')
+ax1.set_xticks(np.arange(0, timeLine[-1], 1000))
+ax1.set_ylim([-2, 30])
+for tick in ax1.get_xticklabels():
+    tick.set_rotation(45)
+
+ax2.plot(Entleersignal,
+         lw=0.5, label='Entleersignal', color='blue')
+
+ax3.plot(Grobsignal,
+         lw=0.5, label='Grobsignal', color='green')
+
+ax4.plot(Feinsignal,
+         lw=0.5, label='Feinsignal', color='black')
+
+ax5.plot(WartenAufStillstand,
+         lw=0.5, label='Warten auf Stillstand', color='yellow')
+
+ax6.plot(Grobabschaltpunkt,
+         lw=0.5, label='Warten auf Stillstand', color='orange')
+#ax2.set_ylim([0, 1])
+#ax2.set_yticks([0, 1])
+
+#ax2.set_xticks(np.arange(0, maxLengthTimeStp, 250))
+
+
+plt.legend()
+
+
+plt.grid(linestyle='-.', linewidth='0.25', color='green')
+plt.yticks([0, 25, 30])
+plt.show()
+
+
+# csv Datei anlegen und alle Werte speichern
+''' 
+NamenZusatz_2 = '_cleanFile_01'
+
+with open('LearnPaython_Class\EigeneProgramme\TraceDaten\TraceDaten' + NamenZusatz_2 + '.csv', 'w') as f2:
+    for key in kurvenDaten.keys():
+        f2.write("%s,%s\n" % (key, kurvenDaten[key]))
+ '''
