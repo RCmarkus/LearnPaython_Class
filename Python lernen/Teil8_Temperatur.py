@@ -11,7 +11,9 @@ with open('Python lernen\Teil_08_Temperatur_Draußen Temp_2.txt', 'r') as f:
         t = float(t)
         tageswert[datum].append(t)
 
-tagMax, tagMin, tagDatum = []
+tagMax = []
+tagMin = []
+tagDatum = []
 for key in tageswert:
     heigtTemp = max(tageswert[key])
     lowTemp = min(tageswert[key])
